@@ -1,0 +1,15 @@
+empdet = load 'emp_details.txt' using PigStorage(',') as (empid:int,name:chararray,city:chararray,role:chararray);
+empsal = load 'emp_salary.txt' using PigStorage(',') as (eid:int,esalary:int);
+join_emp = join empdet by empid,empsal by eid;
+cmp_emp = foreach join_emp generate empdet::empid,empdet::name,empsal::esalary,empdet::role;
+
+MIN_count_emp = foreach grp_emp generate group , COUNT(cmp_emp.empdet::role), MIN(cmp_emp.empsal::esalary)
+MAX_count_emp = foreach grp_emp generate group , COUNT(cmp_emp.empdet::role), MAX(cmp_emp.empsal::esalary)
+limit_emp = limit cmp_emp 3;
+sum_count_emp = foreach grp_emp generate group , COUNT(cmp_emp.empdet::role), SUM(cmp_emp.empsal::esalary)
+dis_emp = distinct grp_emp;
+flat_cmp_emp = foreach cmp_emp generate empdet::name , flatten(empsal::esalary);
+IsEmpty_cmp_emp = foreach cmp_emp generate empdet::name , (IsEmpty(empsal::esalary)?0:empsal::esalary) as Salary;
+tok_cmp_emp = foreach cmp_emp generate empdet::name , TOKENIZE(empdet::role);
+concat_cmp_emp = foreach cmp_emp generate empdet::name , CONCAT(empdet::role,'--',empdet::name);
+store cmp_emp into 'pig_output';
